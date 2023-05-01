@@ -1524,6 +1524,26 @@ class ComposerParamSignatureTests(useFir: Boolean) : AbstractCodegenSignatureTes
         """
     )
 
+    val hashCodeEqualsAndToString = if (useFir) {
+        """
+              public static equals-impl(ILjava/lang/Object;)Z
+              public equals(Ljava/lang/Object;)Z
+              public static hashCode-impl(I)I
+              public hashCode()I
+              public static toString-impl(I)Ljava/lang/String;
+              public toString()Ljava/lang/String;
+        """
+    } else {
+        """
+              public static toString-impl(I)Ljava/lang/String;
+              public toString()Ljava/lang/String;
+              public static hashCode-impl(I)I
+              public hashCode()I
+              public static equals-impl(ILjava/lang/Object;)Z
+              public equals(Ljava/lang/Object;)Z
+        """
+    }
+
     @Test
     fun testFunInterfaceWithInlineReturnType() = checkApi(
         """
@@ -1538,12 +1558,7 @@ class ComposerParamSignatureTests(useFir: Boolean) : AbstractCodegenSignatureTes
         """
             public final class Color {
               public final getValue()I
-              public static toString-impl(I)Ljava/lang/String;
-              public toString()Ljava/lang/String;
-              public static hashCode-impl(I)I
-              public hashCode()I
-              public static equals-impl(ILjava/lang/Object;)Z
-              public equals(Ljava/lang/Object;)Z
+              $hashCodeEqualsAndToString
               private synthetic <init>(I)V
               public static constructor-impl(I)I
               public final static synthetic box-impl(I)LColor;
@@ -1583,12 +1598,7 @@ class ComposerParamSignatureTests(useFir: Boolean) : AbstractCodegenSignatureTes
         """
             public final class Color {
               public final getValue()I
-              public static toString-impl(I)Ljava/lang/String;
-              public toString()Ljava/lang/String;
-              public static hashCode-impl(I)I
-              public hashCode()I
-              public static equals-impl(ILjava/lang/Object;)Z
-              public equals(Ljava/lang/Object;)Z
+              $hashCodeEqualsAndToString
               private synthetic <init>(I)V
               public static constructor-impl(I)I
               public final static synthetic box-impl(I)LColor;
