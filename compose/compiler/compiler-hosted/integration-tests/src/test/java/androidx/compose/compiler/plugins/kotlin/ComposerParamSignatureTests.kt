@@ -105,6 +105,21 @@ class ComposerParamSignatureTests(useFir: Boolean) : AbstractCodegenSignatureTes
     }
 
     @Test
+    fun testComposableLambdaCall() = validateBytecode(
+        """
+            @Composable
+            fun Foo(f: @Composable () -> Unit) {
+              f()
+            }
+        """
+    ) {
+        // Calls to a composable lambda needs to invoke the `Function2.invoke` interface method
+        // taking two objects and *not* directly the `invoke` method that takes a Composer and
+        // an unboxed int.
+        assertTrue(it.contains("INVOKEINTERFACE kotlin/jvm/functions/Function2.invoke (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; (itf)"))
+    }
+
+    @Test
     fun testStrangeReceiverIssue() = codegen(
         """
         import androidx.compose.runtime.ExplicitGroupsComposable

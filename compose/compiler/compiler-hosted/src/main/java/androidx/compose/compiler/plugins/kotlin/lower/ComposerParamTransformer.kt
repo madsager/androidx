@@ -193,10 +193,10 @@ class ComposerParamTransformer(
                 }
                 symbol.owner.withComposerParamIfNeeded()
             }
-            symbol.owner.hasComposableAnnotation() ->
-                symbol.owner.withComposerParamIfNeeded()
             isComposableLambdaInvoke() ->
                 symbol.owner.lambdaInvokeWithComposerParam()
+            symbol.owner.hasComposableAnnotation() ->
+                symbol.owner.withComposerParamIfNeeded()
             // Not a composable call
             else -> return this
         }
