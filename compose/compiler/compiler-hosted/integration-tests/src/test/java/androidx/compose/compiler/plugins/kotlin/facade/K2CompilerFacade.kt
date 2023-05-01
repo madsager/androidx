@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensions
@@ -42,9 +43,12 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.constant.ConstantValue
+import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendExtension
 import org.jetbrains.kotlin.fir.backend.jvm.JvmFir2IrExtensions
@@ -120,10 +124,35 @@ class K2CompilerFacade(environment: KotlinCoreEnvironment) : KotlinCompilerFacad
             analysisResult.moduleCompilerAnalyzedOutput
         )).convertToIrAndActualizeForJvm(
             fir2IrExtensions,
+            Fir2IrConfiguration(
+                configuration.languageVersionSettings,
+                configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
+                object : EvaluatedConstTracker() {
+                    private val storage =
+                        ConcurrentHashMap<String, ConcurrentHashMap<Pair<Int, Int>, ConstantValue<*>>>()
+
+                    override fun save(
+                        start: Int,
+                        end: Int,
+                        file: String,
+                        constant: ConstantValue<*>
+                    ) {
+                        storage
+                            .getOrPut(file) { ConcurrentHashMap() }
+                            .let { it[start to end] = constant }
+                    }
+
+                    override fun load(start: Int, end: Int, file: String): ConstantValue<*>? {
+                        return storage[file]?.get(start to end)
+                    }
+
+                    override fun load(file: String): Map<Pair<Int, Int>, ConstantValue<*>>? {
+                        return storage[file]
+                    }
+                }
+            ),
             IrGenerationExtension.getInstances(project),
-            linkViaSignatures = configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
-            diagnosticReporter = analysisResult.reporter,
-            languageVersionSettings = configuration.languageVersionSettings
+            analysisResult.reporter
         )
 
         return FirFrontendResult(fir2IrResult, fir2IrExtensions)
