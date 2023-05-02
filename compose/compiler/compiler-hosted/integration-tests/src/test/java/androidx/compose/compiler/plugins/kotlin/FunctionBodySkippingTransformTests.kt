@@ -2691,13 +2691,13 @@ class FunctionBodySkippingTransformTests(useFir: Boolean) : FunctionBodySkipping
                 sourceInformation(%composer, "C:Test.kt")
                 val %dirty = %changed
                 if (%changed and 0b1110 === 0) {
-                  %dirty = %dirty or if (%composer.changed(%this%null)) 0b0100 else 0b0010
+                  %dirty = %dirty or if (%composer.changed(<this>)) 0b0100 else 0b0010
                 }
                 if (%dirty and 0b01011011 !== 0b00010010 || !%composer.skipping) {
                   if (isTraceInProgress()) {
                     traceEventStart(<>, %changed, -1, <>)
                   }
-                  used(%this%null.x)
+                  used(${if (useFir) "x" else "<this>.x"})
                   if (isTraceInProgress()) {
                     traceEventEnd()
                   }
@@ -2723,13 +2723,13 @@ class FunctionBodySkippingTransformTests(useFir: Boolean) : FunctionBodySkipping
                 sourceInformation(%composer, "C:Test.kt")
                 val %dirty = %changed
                 if (%changed and 0b1110 === 0) {
-                  %dirty = %dirty or if (%composer.changed(%this%null)) 0b0100 else 0b0010
+                  %dirty = %dirty or if (%composer.changed(<this>)) 0b0100 else 0b0010
                 }
                 if (%dirty and 0b01011011 !== 0b00010010 || !%composer.skipping) {
                   if (isTraceInProgress()) {
                     traceEventStart(<>, %changed, -1, <>)
                   }
-                  used(%this%null.x)
+                  used(${if (useFir) "x" else "<this>.x"})
                   if (isTraceInProgress()) {
                     traceEventEnd()
                   }
@@ -3790,7 +3790,7 @@ class FunctionBodySkippingTransformTests(useFir: Boolean) : FunctionBodySkipping
                 sourceInformation(%composer, "C:Test.kt")
                 val %dirty = %changed
                 if (%changed and 0b1110 === 0) {
-                  %dirty = %dirty or if (%composer.changed(%this%null)) 0b0100 else 0b0010
+                  %dirty = %dirty or if (%composer.changed(<this>)) 0b0100 else 0b0010
                 }
                 if (%changed and 0b01110000 === 0) {
                   %dirty = %dirty or if (%composer.changed(it)) 0b00100000 else 0b00010000
@@ -3799,7 +3799,7 @@ class FunctionBodySkippingTransformTests(useFir: Boolean) : FunctionBodySkipping
                   if (isTraceInProgress()) {
                     traceEventStart(<>, %changed, -1, <>)
                   }
-                  used(%this%null)
+                  used(<this>)
                   used(it)
                   if (isTraceInProgress()) {
                     traceEventEnd()

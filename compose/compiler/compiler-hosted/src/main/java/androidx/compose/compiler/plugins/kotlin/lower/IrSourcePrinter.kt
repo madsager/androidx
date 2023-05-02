@@ -1570,6 +1570,7 @@ class IrSourcePrinterVisitor(
             origin == IrDeclarationOrigin.FOR_LOOP_ITERATOR -> "<iterator>"
             !useFir && origin == IrDeclarationOrigin.UNDERSCORE_PARAMETER -> "<unused var>"
             !useFir && name.asString().endsWith("_elvis_lhs") -> "<elvis>"
+            !useFir && name.asString() == "\$this\$null" -> "<this>"
             else -> name.asString()
         }
 
