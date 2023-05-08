@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.setupLanguageVersionSettings
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 
 class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
@@ -44,7 +45,63 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
     }
 
     @Test // Bug report: https://github.com/JetBrains/compose-jb/issues/1407
+    fun testSimpleDefaultInComposable() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 is fixed.
+        assumeFalse(useFir)
+        runCompose(
+            testFunBody = """
+                results["defaultValue"] = ExpectComposable()
+                results["anotherValue"] = ExpectComposable("anotherValue")
+                results["defaultValueDefaultTransform"] = ExpectComposableWithNonComposableLambda()
+                results["anotherValueOtherTransform"] =
+                    ExpectComposableWithNonComposableLambda("anotherValue") {
+                        it + "OtherTransform"
+                    }
+            """.trimIndent(),
+            commonFiles = mapOf(
+                "Expect.kt" to """
+                    import androidx.compose.runtime.*
+
+                    @Composable
+                    expect fun ExpectComposable(
+                        value: String = "defaultValue"
+                    ): String
+                    
+                    @Composable
+                    expect fun ExpectComposableWithNonComposableLambda(
+                        value: String = "defaultValue",
+                        transform: (String) -> String = { it + "DefaultTransform" }
+                    ): String
+                """.trimIndent()
+            ),
+            platformFiles = mapOf("Actual.kt" to """
+                    import androidx.compose.runtime.*
+
+                    @Composable
+                    actual fun ExpectComposable(
+                        value: String
+                    ) = value
+                    
+                    @Composable
+                    actual fun ExpectComposableWithNonComposableLambda(
+                        value: String,
+                        transform: (String) -> String
+                    ) = transform(value)
+                """.trimIndent()
+            )
+        ) { results ->
+            assertEquals("defaultValue", results["defaultValue"])
+            assertEquals("anotherValue", results["anotherValue"])
+            assertEquals("defaultValueDefaultTransform", results["defaultValueDefaultTransform"])
+            assertEquals("anotherValueOtherTransform", results["anotherValueOtherTransform"])
+        }
+    }
+
+    @Test // Bug report: https://github.com/JetBrains/compose-jb/issues/1407
     fun testDefaultValuesFromExpectComposableFunctions() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable { value ->
@@ -56,7 +113,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                 results["returnDefaultValue"] = ExpectComposableWithReturn()
                 results["returnAnotherValue"] = ExpectComposableWithReturn("returnAnotherValue")
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -69,8 +126,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     expect fun ExpectComposableWithReturn(
                         value: String = "returnDefaultValue"
                     ): String
-                """.trimIndent(),
-                "Actual.kt" to """
+                """.trimIndent()
+            ),
+            platformFiles = mapOf("Actual.kt" to """
                     import androidx.compose.runtime.*
 
                     @Composable
@@ -96,6 +154,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testExpectWithGetExpectedPropertyInDefaultValueExpression() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable { value ->
@@ -105,7 +166,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     results["anotherValue"] = value
                 }
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -116,7 +177,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         value: () -> String = { expectedProperty },
                         content: @Composable (v: String) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -142,6 +204,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testExpectWithComposableExpressionInDefaultValue() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable { value ->
@@ -151,7 +216,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     results["anotherValue"] = value
                 }
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -165,7 +230,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         value: String = defaultValueComposable(),
                         content: @Composable (v: String) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -186,6 +252,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testExpectWithTypedParameter() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable<String>("aeiouy") { value ->
@@ -195,7 +264,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     results["anotherValue"] = value
                 }
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -205,7 +274,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         composeValue: @Composable () -> T = { value },
                         content: @Composable (T) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -227,6 +297,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testExpectWithRememberInDefaultValueExpression() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable { value ->
@@ -236,7 +309,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     results["anotherValue"] = value
                 }
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -245,7 +318,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         value: String = remember { "rememberedDefaultValue" },
                         content: @Composable (v: String) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -266,6 +340,9 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
     @Test
     fun testExpectWithDefaultValueUsingAnotherArgument() {
+        // TODO: Enable once https://youtrack.jetbrains.com/issue/KT-56173 and
+        // https://youtrack.jetbrains.com/issue/KT-58539 are fixed.
+        assumeFalse(useFir)
         runCompose(
             testFunBody = """
                 ExpectComposable("AbccbA") { value ->
@@ -275,7 +352,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                     results["anotherValue"] = value
                 }
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -285,7 +362,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         composeText: (String) -> String = { value },
                         content: @Composable (v: String) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -321,7 +399,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                 }
                 savedContentLambda!!.invoke()
             """.trimIndent(),
-            files = mapOf(
+            commonFiles = mapOf(
                 "Expect.kt" to """
                     import androidx.compose.runtime.*
 
@@ -331,7 +409,8 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
                         value: String = "000",
                         content: @Composable (v: String) -> Unit
                     )
-                """.trimIndent(),
+                """.trimIndent()),
+            platformFiles = mapOf(
                 "Actual.kt" to """
                     import androidx.compose.runtime.*
 
@@ -359,12 +438,13 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
         mainImports: String = "",
         @Language("kotlin")
         testFunBody: String,
-        files: Map<String, String>, // name to source code
+        commonFiles: Map<String, String>, // name to source code
+        platformFiles: Map<String, String>, // name to source code
         accessResults: (results: HashMap<*, *>) -> Unit
     ) {
         val className = "TestFCS_${uniqueNumber++}"
 
-        val allSources = files + ("Main.kt" to """
+        val allCommonSources = commonFiles + ("Main.kt" to """
             import androidx.compose.runtime.*
             $mainImports
 
@@ -379,7 +459,7 @@ class RunComposableTests(useFir: Boolean) : AbstractCodegenTest(useFir) {
 
         """.trimIndent())
 
-        val compiledClasses = classLoader(allSources)
+        val compiledClasses = classLoader(platformFiles, allCommonSources)
         val allClassFiles = compiledClasses.allGeneratedFiles.filter {
             it.relativePath.endsWith(".class")
         }

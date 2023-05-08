@@ -30,7 +30,7 @@ abstract class AbstractComposeDiagnosticsTest(useFir: Boolean) : AbstractCompile
 
         val errors = analyze(
             listOf(SourceFile("test.kt", clearText, ignoreParseErrors))
-        ).diagnostics
+        ).flatMap { it.diagnostics }
 
         val rangeToDiagnostics = errors.flatGroupBy { it.textRanges }.mapValues { entry ->
             entry.value.map { it.factoryName }.toSet()
